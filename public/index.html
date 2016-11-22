@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Welcome to Firebase Hosting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css" />
+    
+<script src="https://www.gstatic.com/firebasejs/3.6.1/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  // TODO enter correct configs here
+  var config = {
+    apiKey: "AIzaSyAMYqWj89WIme8MfnMkgBtexe1bdlhrv0A",
+    authDomain: "gdg-demo-af930.firebaseapp.com",
+    databaseURL: "https://gdg-demo-af930.firebaseio.com",
+    storageBucket: "gdg-demo-af930.appspot.com",
+    messagingSenderId: "830688859341"
+  };
+  firebase.initializeApp(config);
+</script>
+  </head>
+  <body>
+    <div class="container">
+        <h1>Tweeto <button type="button" onclick="login()" class="btn btn-primary">Login</button></h1>
+        <form class="card card-block">
+            <div class="form-group">
+                <label for="tweetarea">What are you up to?</label>
+                <textarea id="tweetarea" class="form-control"></textarea>
+            </div>
+            <button type="button" onclick="tweet()" class="btn btn-primary">Tweet</button>
+        </form>
+        <form class="card card-block form-inline">
+            <div class="form-group">
+                <input type="search" id="query" class="form-control" placeholder="Search by name" />
+            </div>
+            <button type="button" onclick="search()" class="btn btn-primary">Filter</button>
+        </form>
+        <main id="entries"></main>
+    </div>
+    <script>
+      function search() {
+        var query = document.getElementById('query').value;
+        renderTweets(query);
+      }
+    
+     function login() {
+       var provider = new firebase.auth.GoogleAuthProvider();
+       firebase.auth().signInWithPopup(provider);
+     }
+     
+     var loggedInUser;
+     
+     firebase.auth().onAuthStateChanged(function(authState) {
+       if(authState) {
+         loggedInUser = authState;
+         renderTweets();
+       }
+     });
+     
+     function tweet() {
+       var textArea = document.getElementById('tweetarea');
+       var text = textArea.value;
+       firebase.database().ref('tweets').push({
+         text: text,
+         creator: loggedInUser.displayName,
+         avatar: loggedInUser.photoURL
+       }, function(err) {
+         if(err) {
+           alert('soemthing went wrong');
+         }
+       });
+     }
+     
+     function escape(s) { return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");}
+     
+     function renderTweets(query) {
+       var container = document.getElementById('entries');
+       container.innerHTML = '';
+       var tweetList = firebase.database().ref('tweets');
+       tweetList.off();
+       
+       if(query) {
+         tweetList = tweetList.orderByChild('creator').equalTo(query);
+       }
+       
+       tweetList.on('child_added', function(tweet) {
+         var tweetData = tweet.val();
+         var tweetHtml = '<div class="card card-block media">\
+             <div class="media-left"><img width="50" class="media-object" src="' + escape(tweetData.avatar) + '" /></div>\
+             <div class="media-body">\
+                 <h4 class="media-heading">' + escape(tweetData.creator) + '</h4>\
+                 ' + escape(tweetData.text) + '\
+             </div>\
+         </div>';
+         container.innerHTML = tweetHtml + container.innerHTML;
+       });
+     }
+    </script>
+  </body>
+</html>

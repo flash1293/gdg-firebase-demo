@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "false",
+      "tweets": {
+        "$tweets": {
+          ".write": "auth != null && newData.exists() && !data.exists()",
+            ".validate": "newData.child('text').val().length <= 140"
+        }
+      }
+  }
+}
